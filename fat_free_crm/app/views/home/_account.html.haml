@@ -1,0 +1,29 @@
+- amount = account.opportunities.not_lost.map(&:weighted_amount).sum
+%li.highlight[account]
+  - if account.category
+    .strip{:class => account.category} #{t(account.category)}
+  - else
+    .strip{:style => "color: gray;"} #{t :other}
+
+  .indent
+    = link_to(h(account.name), account)
+    &ndash;
+    %tt
+      = account.location << ", " unless account.location.blank?
+      - user_name = account.user_id == current_user.id ? t(:me) : account.user.try(:full_name)
+      - if user_name
+        = t(:added_by, :time_ago => time_ago_in_words(account.created_at), :user => user_name)
+      - else
+        = t(:added_ago, :value => time_ago_in_words(account.created_at))
+
+    - unless current_user.preference[:accounts_index_view] == "accounts_index_brief"
+      %dt
+        = link_to(account.website, account.website.to_url) << " | " if account.website.present?
+        = link_to_email(account.email) << " | " if account.email.present?
+        = t(:phone_small) << ": " << (account.toll_free_phone || account.phone) << " | " if account.toll_free_phone? || account.phone?
+        = t('pluralize.contact', account.contacts.count) << " | "
+        = t('pluralize.opportunity', account.opportunities.count)
+      - if account.tag_list.present?
+        %dt
+          .tags= tags_for_dashboard(account)
+      = hook(:account_bottom, self, :account => account)
